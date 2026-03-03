@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TranscritVite - Transcription Professionnelle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Sans+Arabic:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+            overscroll-behavior-y: contain;
+        }
+
+        .arabic-text {
+            font-family: 'Noto Sans Arabic', sans-serif;
+            direction: rtl;
+            text-align: right;
+            line-height: 1.8;
+        }
+
+        .recording-pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .status-dot {
+            height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 8px;
+        }
+
+        /* Ad Slot Styling */
+        .ad-placeholder {
+            background: #f8fafc;
+            border: 2px dashed #e2e8f0;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            overflow: hidden;
+            text-align: center;
+            padding: 4px;
+        }
+
+        /* Modal Overlay */
+        #confirm-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Layout structure for Desktop/Web */
+        @media (min-width: 1280px) {
+            .main-container {
+                display: grid;
+                grid-template-columns: 200px 1fr 200px;
+                gap: 30px;
+                width: 100%;
+                max-width: 1440px;
+                padding: 0 20px;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 md:p-8 pb-24">
+
+    <div class="main-container w-full flex flex-col items-center">
+        
+        <!-- SIDE AD LEFT (Desktop Only) -->
+        <div class="hidden xl:flex flex-col">
+            <div class="ad-placeholder w-[160px] h-[600px] sticky top-8">
+                Publicité Latérale (160x600)
+            </div>
+        </div>
+
+        <!-- APP CARD -->
+        <div class="max-w-3xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
+            <!-- Header -->
+            <div class="bg-slate-900 p-6 text-white">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-indigo-500 rounded-xl">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold tracking-tight">TranscritVite</h1>
+                            <p class="text-[10px] text-slate-400 uppercase tracking-[0.2em]">Outil de Transcription</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 bg-slate-800 p-1 rounded-xl border border-slate-700">
+                        <button id="btn-fr" onclick="setLanguage('fr-FR')" class="px-4 py-2 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white">FR</button>
+                        <button id="btn-ar" onclick="setLanguage('ar-SA')" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white">AR</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="bg-slate-50 px-6 py-3 border-b border-slate-100 flex justify-between items-center">
+                <div class="flex items-center text-sm font-medium text-slate-600">
+                    <span id="status-dot" class="status-dot bg-slate-300"></span>
+                    <span id="status-text">Prêt</span>
+                </div>
+                <div id="timer" class="font-mono text-indigo-600 font-bold">00:00</div>
+            </div>
+
+            <!-- Editor Area -->
+            <div class="p-4 md:p-6">
+                <textarea id="transcript-output" 
+                    class="w-full h-[40vh] md:h-96 p-6 text-slate-800 bg-white border-2 border-slate-100 rounded-2xl focus:border-indigo-500 transition-all outline-none resize-none text-xl shadow-inner"
+                    placeholder="Cliquez sur démarrer..."></textarea>
+                
+                <!-- Main Actions -->
+                <div class="mt-6 flex flex-col gap-4">
+                    <div class="flex gap-4">
+                        <button id="start-btn" class="flex-1 flex items-center justify-center gap-2 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl transition-all shadow-lg active:scale-95">
+                            Démarrer le Micro
+                        </button>
+                        <button id="stop-btn" class="hidden flex-1 flex items-center justify-center gap-2 px-8 py-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-2xl transition-all shadow-lg recording-pulse">
+                            Arrêter l'enregistrement
+                        </button>
+                    </div>
+
+                    <!-- Share & Export -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button id="whatsapp-btn" class="flex items-center justify-center gap-2 py-4 bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold rounded-2xl transition-all shadow-md active:scale-95">
+                            WhatsApp
+                        </button>
+                        <button id="share-btn" class="flex items-center justify-center gap-2 py-4 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-2xl transition-all shadow-md active:scale-95">
+                            Partager
+                        </button>
+                    </div>
+
+                    <!-- Bottom Utils -->
+                    <div class="flex justify-between items-center mt-2 px-2">
+                        <button id="clear-btn" class="text-xs font-bold text-slate-400 hover:text-red-600 uppercase tracking-widest transition-colors py-2 px-4">Effacer tout</button>
+                        <button id="download-txt" class="text-xs font-bold text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-colors py-2 px-4 text-right">Exporter TXT</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIDE AD RIGHT (Desktop Only) -->
+        <div class="hidden xl:flex flex-col">
+            <div class="ad-placeholder w-[160px] h-[600px] sticky top-8">
+                Publicité Latérale (160x600)
+            </div>
+        </div>
+
+    </div>
+
+    <!-- STICKY FOOTER AD (Web & Mobile) -->
+    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 flex items-center justify-center h-16 z-40 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
+        <div class="ad-placeholder w-full max-w-lg h-12 m-0 bg-slate-50 text-slate-400">
+            Bannière Publicitaire (320x50 / 468x60)
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100">
+            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-2">Effacer le texte ?</h3>
+            <p class="text-slate-500 mb-6">Toutes les données seront supprimées définitivement.</p>
+            <div class="flex gap-3">
+                <button id="modal-cancel" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors">Annuler</button>
+                <button id="modal-confirm" class="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors">Confirmer</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 px-6 py-3 bg-slate-900 text-white rounded-full text-sm opacity-0 transition-opacity pointer-events-none shadow-2xl z-50">
+        Message
+    </div>
+
+    <script>
+        let currentLang = 'fr-FR';
+        const startBtn = document.getElementById('start-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const whatsappBtn = document.getElementById('whatsapp-btn');
+        const shareBtn = document.getElementById('share-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const downloadTxtBtn = document.getElementById('download-txt');
+        const transcriptOutput = document.getElementById('transcript-output');
+        const statusText = document.getElementById('status-text');
+        const statusDot = document.getElementById('status-dot');
+        const timerDisplay = document.getElementById('timer');
+        const toast = document.getElementById('toast');
+        
+        const confirmModal = document.getElementById('confirm-modal');
+        const modalCancel = document.getElementById('modal-cancel');
+        const modalConfirm = document.getElementById('modal-confirm');
+
+        let recognition;
+        let isRecording = false;
+        let timerInterval;
+        let startTime;
+
+        function setLanguage(lang) {
+            if(isRecording) return showToast("Veuillez arrêter l'enregistrement d'abord.");
+            currentLang = lang;
+            const isAr = lang.startsWith('ar');
+            document.getElementById('btn-fr').className = lang === 'fr-FR' ? 'px-4 py-2 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white' : 'px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white';
+            document.getElementById('btn-ar').className = isAr ? 'px-4 py-2 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white' : 'px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white';
+            
+            transcriptOutput.className = isAr ? "w-full h-[40vh] md:h-96 p-6 text-slate-800 bg-white border-2 border-slate-100 rounded-2xl focus:border-indigo-500 transition-all outline-none resize-none text-xl shadow-inner arabic-text" : "w-full h-[40vh] md:h-96 p-6 text-slate-800 bg-white border-2 border-slate-100 rounded-2xl focus:border-indigo-500 transition-all outline-none resize-none text-xl shadow-inner";
+            transcriptOutput.placeholder = isAr ? "تحدث الآن ليتم تحويل صوتك إلى نص..." : "Parlez maintenant pour transcrire votre voix...";
+        }
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.onstart = () => { isRecording = true; updateUI(); startTimer(); };
+            recognition.onresult = (e) => {
+                let final = '';
+                for (let i = e.resultIndex; i < e.results.length; ++i) {
+                    if (e.results[i].isFinal) final += e.results[i][0].transcript;
+                }
+                if (final) {
+                    const space = transcriptOutput.value.length > 0 ? ' ' : '';
+                    transcriptOutput.value += space + final.trim() + (currentLang.startsWith('fr') ? "." : " ");
+                    transcriptOutput.scrollTop = transcriptOutput.scrollHeight;
+                }
+            };
+            recognition.onend = () => { if (isRecording) recognition.start(); };
+            recognition.onerror = () => { stopRecording(); showToast("Erreur d'accès au micro"); };
+        }
+
+        function updateUI() {
+            startBtn.classList.toggle('hidden', isRecording);
+            stopBtn.classList.toggle('hidden', !isRecording);
+            statusDot.className = `status-dot ${isRecording ? 'bg-red-500' : 'bg-slate-300'}`;
+            statusText.innerText = isRecording ? 'Enregistrement...' : 'Prêt';
+        }
+
+        function startTimer() {
+            startTime = Date.now();
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const mins = Math.floor(elapsed/60).toString().padStart(2,'0');
+                const secs = (elapsed%60).toString().padStart(2,'0');
+                timerDisplay.innerText = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function stopRecording() { 
+            isRecording = false; 
+            if(recognition) recognition.stop(); 
+            updateUI(); 
+            clearInterval(timerInterval); 
+        }
+
+        function showToast(m) { 
+            toast.innerText = m; 
+            toast.classList.remove('opacity-0'); 
+            setTimeout(() => toast.classList.add('opacity-0'), 3000); 
+        }
+
+        startBtn.onclick = () => { 
+            if(!recognition) return showToast("Navigateur non compatible");
+            recognition.lang = currentLang; 
+            recognition.start(); 
+        };
+
+        stopBtn.onclick = stopRecording;
+        clearBtn.onclick = () => {
+            if (transcriptOutput.value.trim() === "") return showToast("Le texte est déjà vide");
+            confirmModal.style.display = 'flex';
+        };
+        modalCancel.onclick = () => confirmModal.style.display = 'none';
+        modalConfirm.onclick = () => {
+            transcriptOutput.value = "";
+            timerDisplay.innerText = "00:00";
+            confirmModal.style.display = 'none';
+            showToast("Texte effacé");
+        };
+
+        whatsappBtn.onclick = () => {
+            if (!transcriptOutput.value) return showToast("Aucun texte à partager.");
+            window.open("https://wa.me/?text=" + encodeURIComponent(transcriptOutput.value), '_blank');
+        };
+
+        shareBtn.onclick = async () => {
+            if (!transcriptOutput.value) return showToast("Aucun texte à partager.");
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: 'Transcription', text: transcriptOutput.value });
+                } catch (err) {}
+            } else {
+                transcriptOutput.select();
+                document.execCommand('copy');
+                showToast("Texte copié dans le presse-papier !");
+            }
+        };
+
+        downloadTxtBtn.onclick = () => {
+            if (!transcriptOutput.value) return showToast("Rien à exporter.");
+            const blob = new Blob([transcriptOutput.value], {type: "text/plain;charset=utf-8"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url; a.download = "transcription.txt"; a.click();
+        };
+    </script>
+</body>
+</html>
