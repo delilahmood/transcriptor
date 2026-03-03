@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TranscritVite - Transcription Professionnelle</title>
+    <title>TranscritVite - Contrôle Vocal Optionnel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Sans+Arabic:wght@400;700&display=swap');
@@ -47,33 +47,33 @@
             margin: 0 auto;
         }
 
-        .side-ad-right {
-            display: none;
-            width: 160px;
-            flex-shrink: 0;
-            position: sticky;
-            top: 20px;
+        /* Toggle Switch Style */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
         }
-
-        @media (min-width: 1024px) {
-            .side-ad-right {
-                display: block;
-            }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #475569;
+            transition: .4s;
+            border-radius: 24px;
         }
-
-        .ad-placeholder {
-            background-color: rgba(203, 213, 225, 0.2);
-            border: 2px dashed #cbd5e1;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            color: #94a3b8;
-            font-size: 10px;
-            font-weight: bold;
-            text-transform: uppercase;
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px; width: 18px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
         }
+        input:checked + .slider { background-color: #6366f1; }
+        input:checked + .slider:before { transform: translateX(20px); }
 
         #confirm-modal {
             display: none;
@@ -82,8 +82,7 @@
             background: rgba(15, 23, 42, 0.75);
             backdrop-filter: blur(4px);
             z-index: 100;
-            align-items: center;
-            justify-content: center;
+            align-items: center; justify-content: center;
         }
     </style>
 </head>
@@ -92,6 +91,7 @@
     <div class="main-layout">
         <main class="flex-1 max-w-3xl">
             <div class="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 mt-4">
+                <!-- Header -->
                 <div class="bg-slate-900 p-6 text-white">
                     <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                         <div class="flex items-center gap-3">
@@ -102,7 +102,13 @@
                             </div>
                             <div>
                                 <h1 class="text-xl font-extrabold tracking-tight">TranscritVite</h1>
-                                <p class="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-medium">Capture Continue</p>
+                                <div class="flex items-center gap-3 mt-1">
+                                    <span class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Écouteur Vocal</span>
+                                    <label class="switch">
+                                        <input type="checkbox" id="voice-toggle">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                         
@@ -113,129 +119,88 @@
                     </div>
                 </div>
 
+                <!-- Status Bar -->
                 <div class="bg-slate-50 px-8 py-4 border-b border-slate-100 flex justify-between items-center">
                     <div class="flex items-center text-sm font-semibold text-slate-600">
                         <span id="status-dot" class="status-dot bg-slate-300"></span>
                         <span id="status-text">Prêt à l'usage</span>
+                        <span id="listening-indicator" class="hidden ml-3 px-2 py-0.5 bg-indigo-100 text-indigo-600 text-[9px] rounded-full animate-pulse">MICRO ACTIF</span>
                     </div>
                     <div id="timer" class="font-mono text-indigo-600 font-bold bg-indigo-50 px-3 py-1 rounded-lg">00:00</div>
                 </div>
 
+                <!-- Editor -->
                 <div class="p-6 md:p-8">
                     <textarea id="transcript-output" 
                         class="w-full h-[45vh] md:h-[400px] p-8 text-slate-800 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none resize-none text-xl rounded-[2rem] shadow-inner"
-                        placeholder="Appuyez sur le bouton bleu pour commencer..."></textarea>
+                        placeholder="Cliquez sur démarrer ou activez l'écouteur vocal..."></textarea>
                     
                     <div class="mt-8 flex flex-col gap-5">
                         <div class="flex gap-4">
                             <button id="start-btn" class="flex-1 flex items-center justify-center gap-3 px-8 py-5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-[1.5rem] transition-all shadow-xl shadow-indigo-200 active:scale-95 text-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
                                 Démarrer
                             </button>
                             <button id="stop-btn" class="hidden flex-1 flex items-center justify-center gap-3 px-8 py-5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-[1.5rem] transition-all shadow-xl shadow-red-200 recording-pulse text-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H10a1 1 0 01-1-1v-4z" />
-                                </svg>
                                 Arrêter
                             </button>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
-                            <button id="whatsapp-btn" class="flex items-center justify-center gap-2 py-4 bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold rounded-2xl transition-all shadow-lg active:scale-95">
-                                WhatsApp
-                            </button>
-                            <button id="share-btn" class="flex items-center justify-center gap-2 py-4 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-2xl transition-all shadow-lg active:scale-95">
-                                Partager
-                            </button>
+                            <button id="whatsapp-btn" class="flex items-center justify-center gap-2 py-4 bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold rounded-2xl transition-all shadow-lg active:scale-95">WhatsApp</button>
+                            <button id="share-btn" class="flex items-center justify-center gap-2 py-4 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-2xl transition-all shadow-lg active:scale-95">Partager</button>
                         </div>
-
+                        
                         <div class="flex justify-between items-center mt-2">
-                            <button id="clear-btn" class="text-xs font-bold text-slate-400 hover:text-red-600 uppercase tracking-widest transition-colors p-3">Effacer</button>
-                            <button id="download-txt" class="text-xs font-bold text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-colors p-3">Exporter .TXT</button>
+                            <button id="clear-btn" class="text-xs font-bold text-slate-400 hover:text-red-600 uppercase tracking-widest p-3">Effacer</button>
+                            <button id="download-txt" class="text-xs font-bold text-slate-400 hover:text-indigo-600 uppercase tracking-widest p-3">Exporter .TXT</button>
                         </div>
                     </div>
                 </div>
             </div>
         </main>
-
-        <aside class="side-ad-right">
-            <div class="ad-placeholder h-[600px]">
-                Publicité Latérale<br>(160x600)
-            </div>
-        </aside>
     </div>
 
-    <div class="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-slate-200 flex items-center justify-center h-20 z-40 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
-        <div class="ad-placeholder w-full max-w-lg h-16">
-            Publicité Bas de Page (Bannière)
-        </div>
-    </div>
-
+    <!-- Modals -->
     <div id="confirm-modal" class="p-4">
         <div class="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl text-center border border-slate-100">
-            <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-            </div>
             <h3 class="text-2xl font-black text-slate-900 mb-2">Tout effacer ?</h3>
-            <p class="text-slate-500 mb-8 leading-relaxed">Le texte sera définitivement supprimé.</p>
-            <div class="flex flex-col gap-3">
-                <button id="modal-confirm" class="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl transition-colors shadow-lg shadow-red-100">Oui, effacer</button>
-                <button id="modal-cancel" class="w-full py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl transition-colors">Annuler</button>
+            <div class="flex flex-col gap-3 mt-8">
+                <button id="modal-confirm" class="w-full py-4 bg-red-600 text-white font-bold rounded-2xl shadow-lg">Oui, effacer</button>
+                <button id="modal-cancel" class="w-full py-4 bg-slate-100 text-slate-700 font-bold rounded-2xl">Annuler</button>
             </div>
         </div>
     </div>
-
-    <div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 px-8 py-4 bg-slate-900 text-white rounded-2xl text-sm font-semibold opacity-0 transition-opacity pointer-events-none shadow-2xl z-50">
-        Message
-    </div>
+    <div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 px-8 py-4 bg-slate-900 text-white rounded-2xl text-sm font-semibold opacity-0 transition-opacity pointer-events-none shadow-2xl z-50">Message</div>
 
     <script>
         let currentLang = 'fr-FR';
+        let isRecording = false;
+        let isVoiceControlEnabled = false;
+        let recognition;
+        let timerInterval, silenceTimeout, startTime, accumulatedTime = 0;
+        let lastFinalPhrase = "";
+
+        const transcriptOutput = document.getElementById('transcript-output');
         const startBtn = document.getElementById('start-btn');
         const stopBtn = document.getElementById('stop-btn');
-        const whatsappBtn = document.getElementById('whatsapp-btn');
-        const shareBtn = document.getElementById('share-btn');
-        const clearBtn = document.getElementById('clear-btn');
-        const downloadTxtBtn = document.getElementById('download-txt');
-        const transcriptOutput = document.getElementById('transcript-output');
+        const voiceToggle = document.getElementById('voice-toggle');
+        const listeningIndicator = document.getElementById('listening-indicator');
+        const timerDisplay = document.getElementById('timer');
         const statusText = document.getElementById('status-text');
         const statusDot = document.getElementById('status-dot');
-        const timerDisplay = document.getElementById('timer');
         const toast = document.getElementById('toast');
         const confirmModal = document.getElementById('confirm-modal');
-        const modalCancel = document.getElementById('modal-cancel');
-        const modalConfirm = document.getElementById('modal-confirm');
 
-        let recognition;
-        let isRecording = false;
-        let shouldRestart = false; // Flag pour gérer les pauses
-        let timerInterval;
-        let startTime;
-        let accumulatedTime = 0;
-
-        function setLanguage(lang) {
-            if(isRecording) return showToast("Arrêtez l'enregistrement d'abord.");
-            currentLang = lang;
-            const isAr = lang.startsWith('ar');
-            document.getElementById('btn-fr').className = lang === 'fr-FR' ? 'px-5 py-2.5 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-lg' : 'px-5 py-2.5 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white';
-            document.getElementById('btn-ar').className = isAr ? 'px-5 py-2.5 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-lg' : 'px-5 py-2.5 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white';
-            
-            transcriptOutput.className = isAr ? "w-full h-[45vh] md:h-[400px] p-8 text-slate-800 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none resize-none text-xl rounded-[2rem] shadow-inner arabic-text" : "w-full h-[45vh] md:h-[400px] p-8 text-slate-800 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none resize-none text-xl rounded-[2rem] shadow-inner";
-            transcriptOutput.placeholder = isAr ? "تحدث الآن ليتم تحويل صوتك إلى نص مکتوب..." : "Parlez maintenant pour transcrire votre voix...";
-        }
+        // Commandes Vocales
+        const CMD_START_FR = ["lance le français", "démarre le français", "active le français"];
+        const CMD_START_AR = ["abda tasjal", "lance l'arabe", "active l'arabe", "ibda tasjil"];
+        const CMD_STOP = ["arrête l'enregistrement", "stop", "baraka tasjal", "waqaf", "baraka"];
 
         function initRecognition() {
-            if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-                return null;
-            }
+            if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) return null;
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             const rec = new SpeechRecognition();
+            
             rec.continuous = true;
             rec.interimResults = true;
             rec.lang = currentLang;
@@ -247,44 +212,117 @@
             };
 
             rec.onresult = (e) => {
-                let final = '';
+                let finalBatch = "";
+                
                 for (let i = e.resultIndex; i < e.results.length; ++i) {
-                    if (e.results[i].isFinal) {
-                        final += e.results[i][0].transcript;
+                    const transcript = e.results[i][0].transcript.toLowerCase().trim();
+                    
+                    // Si le contrôle vocal est activé, on cherche les commandes
+                    if (isVoiceControlEnabled) {
+                        // Commande STOP
+                        if (isRecording && CMD_STOP.some(cmd => transcript.includes(cmd))) {
+                            handleStop();
+                            showToast("Commande : Arrêt");
+                            return;
+                        }
+
+                        // Commandes START
+                        if (!isRecording) {
+                            if (CMD_START_FR.some(cmd => transcript.includes(cmd))) {
+                                setLanguage('fr-FR');
+                                handleStart();
+                                showToast("Commande : Démarrage Français");
+                                return;
+                            }
+                            if (CMD_START_AR.some(cmd => transcript.includes(cmd))) {
+                                setLanguage('ar-SA');
+                                handleStart();
+                                showToast("Commande : Démarrage Arabe");
+                                return;
+                            }
+                        }
+                    }
+
+                    // Transcription classique
+                    if (isRecording && e.results[i].isFinal) {
+                        if (transcript !== lastFinalPhrase) {
+                            finalBatch += e.results[i][0].transcript.trim() + " ";
+                            lastFinalPhrase = transcript;
+                        }
                     }
                 }
-                if (final) {
+
+                if (isRecording && finalBatch) {
                     const space = transcriptOutput.value.length > 0 ? ' ' : '';
                     const punct = currentLang.startsWith('fr') ? "." : " ";
-                    transcriptOutput.value += space + final.trim() + punct;
+                    transcriptOutput.value += space + finalBatch.trim() + punct;
                     transcriptOutput.scrollTop = transcriptOutput.scrollHeight;
                 }
             };
 
             rec.onend = () => {
-                // Si l'arrêt n'était pas volontaire, on redémarre
-                if (shouldRestart) {
-                    rec.start();
-                } else {
-                    isRecording = false;
-                    updateUI();
+                // Relance uniquement si contrôle vocal actif OU si on était en train d'enregistrer
+                if (isVoiceControlEnabled || isRecording) {
+                    try { rec.start(); } catch(e) {}
                 }
-            };
-
-            rec.onerror = (e) => {
-                console.error("Erreur recognition:", e.error);
-                if (e.error === 'network') showToast("Erreur réseau");
-                if (e.error === 'not-allowed') showToast("Accès micro refusé");
             };
 
             return rec;
         }
 
+        function handleStart() {
+            lastFinalPhrase = "";
+            isRecording = true;
+            if (!recognition) recognition = initRecognition();
+            try { recognition.start(); } catch(e) {}
+            updateUI();
+        }
+
+        function handleStop() {
+            isRecording = false;
+            if (!isVoiceControlEnabled) recognition.stop();
+            stopTimer();
+            updateUI();
+        }
+
+        voiceToggle.onchange = (e) => {
+            isVoiceControlEnabled = e.target.checked;
+            listeningIndicator.classList.toggle('hidden', !isVoiceControlEnabled);
+            
+            if (isVoiceControlEnabled) {
+                if (!recognition) recognition = initRecognition();
+                try { recognition.start(); } catch(e) {}
+                showToast("Écouteur vocal activé");
+            } else {
+                if (!isRecording && recognition) recognition.stop();
+                showToast("Écouteur vocal désactivé");
+            }
+            updateUI();
+        };
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            const isAr = lang.startsWith('ar');
+            document.getElementById('btn-fr').className = lang === 'fr-FR' ? 'px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-lg' : 'px-5 py-2.5 rounded-xl text-xs font-bold text-slate-400';
+            document.getElementById('btn-ar').className = isAr ? 'px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-lg' : 'px-5 py-2.5 rounded-xl text-xs font-bold text-slate-400';
+            transcriptOutput.className = isAr ? "arabic-text w-full h-[45vh] md:h-[400px] p-8 text-slate-800 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 outline-none resize-none text-xl rounded-[2rem] shadow-inner" : "w-full h-[45vh] md:h-[400px] p-8 text-slate-800 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 outline-none resize-none text-xl rounded-[2rem] shadow-inner";
+            if (recognition) recognition.lang = currentLang;
+        }
+
         function updateUI() {
             startBtn.classList.toggle('hidden', isRecording);
             stopBtn.classList.toggle('hidden', !isRecording);
-            statusDot.className = `status-dot ${isRecording ? 'bg-red-500' : 'bg-slate-300'}`;
-            statusText.innerText = isRecording ? 'Enregistrement en cours' : 'Prêt à l\'usage';
+            
+            if (isRecording) {
+                statusDot.className = 'status-dot bg-red-500';
+                statusText.innerText = 'Enregistrement...';
+            } else if (isVoiceControlEnabled) {
+                statusDot.className = 'status-dot bg-green-500';
+                statusText.innerText = 'En attente d\'ordre...';
+            } else {
+                statusDot.className = 'status-dot bg-slate-300';
+                statusText.innerText = 'Prêt';
+            }
         }
 
         function startTimer() {
@@ -303,69 +341,27 @@
             timerInterval = null;
         }
 
-        startBtn.onclick = () => {
-            if (!recognition) recognition = initRecognition();
-            if (!recognition) return showToast("Navigateur non compatible");
-            
-            shouldRestart = true; // On autorise le redémarrage automatique
-            recognition.lang = currentLang;
-            recognition.start();
-        };
-
-        stopBtn.onclick = () => {
-            shouldRestart = false; // On bloque le redémarrage automatique
-            if (recognition) recognition.stop();
-            stopTimer();
-        };
-
-        clearBtn.onclick = () => {
-            if (transcriptOutput.value.trim() === "") return showToast("Déjà vide");
-            confirmModal.style.display = 'flex';
-        };
-
-        modalCancel.onclick = () => confirmModal.style.display = 'none';
-        modalConfirm.onclick = () => {
-            transcriptOutput.value = "";
-            accumulatedTime = 0;
-            timerDisplay.innerText = "00:00";
-            confirmModal.style.display = 'none';
-            showToast("Zone de texte réinitialisée");
-        };
-
-        whatsappBtn.onclick = () => {
-            if (!transcriptOutput.value) return showToast("Aucun texte.");
-            window.open("https://wa.me/?text=" + encodeURIComponent(transcriptOutput.value), '_blank');
-        };
-
-        shareBtn.onclick = async () => {
-            if (!transcriptOutput.value) return showToast("Aucun texte.");
-            if (navigator.share) {
-                try {
-                    await navigator.share({ title: 'Transcription', text: transcriptOutput.value });
-                } catch (err) {}
-            } else {
-                transcriptOutput.select();
-                document.execCommand('copy');
-                showToast("Copié !");
-            }
-        };
-
-        downloadTxtBtn.onclick = () => {
-            if (!transcriptOutput.value) return showToast("Rien à exporter.");
-            const blob = new Blob([transcriptOutput.value], {type: "text/plain;charset=utf-8"});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url; a.download = "transcription.txt"; a.click();
-        };
-
         function showToast(m) { 
             toast.innerText = m; 
             toast.classList.remove('opacity-0'); 
             setTimeout(() => toast.classList.add('opacity-0'), 3000); 
         }
 
-        // Initialisation
-        recognition = initRecognition();
+        startBtn.onclick = handleStart;
+        stopBtn.onclick = handleStop;
+        
+        document.getElementById('whatsapp-btn').onclick = () => {
+            window.open("https://wa.me/?text=" + encodeURIComponent(transcriptOutput.value), '_blank');
+        };
+        document.getElementById('clear-btn').onclick = () => confirmModal.style.display = 'flex';
+        document.getElementById('modal-cancel').onclick = () => confirmModal.style.display = 'none';
+        document.getElementById('modal-confirm').onclick = () => {
+            transcriptOutput.value = ""; accumulatedTime = 0; timerDisplay.innerText = "00:00";
+            confirmModal.style.display = 'none'; showToast("Nettoyé");
+        };
+        
+        window.onload = () => { recognition = initRecognition(); };
     </script>
 </body>
 </html>
+
