@@ -3,365 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TranscritVite - Contrôle Vocal Optionnel</title>
+    <title>TranscritVite - Version Ultra Stable</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Sans+Arabic:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Noto+Sans+Arabic:wght@400;700&display=swap');
         
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f1f5f9;
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
-
-        .arabic-text {
-            font-family: 'Noto Sans Arabic', sans-serif;
-            direction: rtl;
-            text-align: right;
-            line-height: 1.8;
-        }
-
-        .recording-pulse {
-            animation: pulse 1.5s infinite;
-        }
-
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; min-height: 100vh; }
+        .arabic-text { font-family: 'Noto Sans Arabic', sans-serif; direction: rtl; text-align: right; }
+        .recording-pulse { animation: pulse 2s infinite; }
         @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
             100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
-
-        .status-dot {
-            height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 8px;
-        }
-
-        .main-layout {
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            gap: 30px;
-            padding: 20px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        /* Toggle Switch Style */
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 44px;
-            height: 24px;
-        }
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #475569;
-            transition: .4s;
-            border-radius: 24px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px; width: 18px;
-            left: 3px; bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
+        .slider { position: absolute; cursor: pointer; inset: 0; background-color: #cbd5e1; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: #6366f1; }
         input:checked + .slider:before { transform: translateX(20px); }
-
-        #confirm-modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(4px);
-            z-index: 100;
-            align-items: center; justify-content: center;
-        }
     </style>
 </head>
-<body class="pb-24">
+<body class="p-4 md:p-8">
 
-    <div class="main-layout">
-        <main class="flex-1 max-w-3xl">
-            <div class="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 mt-4">
-                <!-- Header -->
-                <div class="bg-slate-900 p-6 text-white">
-                    <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2.5 bg-indigo-500 rounded-2xl">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h1 class="text-xl font-extrabold tracking-tight">TranscritVite</h1>
-                                <div class="flex items-center gap-3 mt-1">
-                                    <span class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Écouteur Vocal</span>
-                                    <label class="switch">
-                                        <input type="checkbox" id="voice-toggle">
-                                        <span class="slider"></span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center gap-1.5 bg-slate-800 p-1 rounded-2xl border border-slate-700 shadow-inner">
-                            <button id="btn-fr" onclick="setLanguage('fr-FR')" class="px-5 py-2.5 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-lg">FR</button>
-                            <button id="btn-ar" onclick="setLanguage('ar-SA')" class="px-5 py-2.5 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white">AR</button>
-                        </div>
-                    </div>
+    <div class="max-w-2xl mx-auto bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200">
+        <!-- Header -->
+        <div class="bg-slate-900 p-6 text-white flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-indigo-600 rounded-2xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
                 </div>
-
-                <!-- Status Bar -->
-                <div class="bg-slate-50 px-8 py-4 border-b border-slate-100 flex justify-between items-center">
-                    <div class="flex items-center text-sm font-semibold text-slate-600">
-                        <span id="status-dot" class="status-dot bg-slate-300"></span>
-                        <span id="status-text">Prêt à l'usage</span>
-                        <span id="listening-indicator" class="hidden ml-3 px-2 py-0.5 bg-indigo-100 text-indigo-600 text-[9px] rounded-full animate-pulse">MICRO ACTIF</span>
-                    </div>
-                    <div id="timer" class="font-mono text-indigo-600 font-bold bg-indigo-50 px-3 py-1 rounded-lg">00:00</div>
-                </div>
-
-                <!-- Editor -->
-                <div class="p-6 md:p-8">
-                    <textarea id="transcript-output" 
-                        class="w-full h-[45vh] md:h-[400px] p-8 text-slate-800 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none resize-none text-xl rounded-[2rem] shadow-inner"
-                        placeholder="Cliquez sur démarrer ou activez l'écouteur vocal..."></textarea>
-                    
-                    <div class="mt-8 flex flex-col gap-5">
-                        <div class="flex gap-4">
-                            <button id="start-btn" class="flex-1 flex items-center justify-center gap-3 px-8 py-5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-[1.5rem] transition-all shadow-xl shadow-indigo-200 active:scale-95 text-lg">
-                                Démarrer
-                            </button>
-                            <button id="stop-btn" class="hidden flex-1 flex items-center justify-center gap-3 px-8 py-5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-[1.5rem] transition-all shadow-xl shadow-red-200 recording-pulse text-lg">
-                                Arrêter
-                            </button>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <button id="whatsapp-btn" class="flex items-center justify-center gap-2 py-4 bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold rounded-2xl transition-all shadow-lg active:scale-95">WhatsApp</button>
-                            <button id="share-btn" class="flex items-center justify-center gap-2 py-4 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-2xl transition-all shadow-lg active:scale-95">Partager</button>
-                        </div>
-                        
-                        <div class="flex justify-between items-center mt-2">
-                            <button id="clear-btn" class="text-xs font-bold text-slate-400 hover:text-red-600 uppercase tracking-widest p-3">Effacer</button>
-                            <button id="download-txt" class="text-xs font-bold text-slate-400 hover:text-indigo-600 uppercase tracking-widest p-3">Exporter .TXT</button>
-                        </div>
+                <div>
+                    <h1 class="text-xl font-black uppercase tracking-tight">TranscritVite</h1>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Écouteur</span>
+                        <label class="switch">
+                            <input type="checkbox" id="voice-toggle">
+                            <span class="slider"></span>
+                        </label>
                     </div>
                 </div>
             </div>
-        </main>
-    </div>
+            <div class="flex items-center gap-2 bg-slate-800 p-1.5 rounded-2xl border border-slate-700">
+                <button id="btn-fr" onclick="changeLanguage('fr-FR')" class="px-5 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-lg">FR</button>
+                <button id="btn-ar" onclick="changeLanguage('ar-SA')" class="px-5 py-2 rounded-xl text-xs font-bold transition-all text-slate-400">AR</button>
+            </div>
+        </div>
 
-    <!-- Modals -->
-    <div id="confirm-modal" class="p-4">
-        <div class="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl text-center border border-slate-100">
-            <h3 class="text-2xl font-black text-slate-900 mb-2">Tout effacer ?</h3>
-            <div class="flex flex-col gap-3 mt-8">
-                <button id="modal-confirm" class="w-full py-4 bg-red-600 text-white font-bold rounded-2xl shadow-lg">Oui, effacer</button>
-                <button id="modal-cancel" class="w-full py-4 bg-slate-100 text-slate-700 font-bold rounded-2xl">Annuler</button>
+        <!-- Status -->
+        <div class="bg-slate-50 px-8 py-3 border-b flex justify-between items-center text-[10px] font-black uppercase text-slate-500 tracking-tighter">
+            <div class="flex items-center gap-2">
+                <span id="status-dot" class="h-2 w-2 rounded-full bg-slate-300"></span>
+                <span id="status-text">Système Prêt</span>
+                <span id="listening-indicator" class="hidden px-2 py-0.5 bg-indigo-100 text-indigo-600 rounded">Micro Ouvert</span>
+            </div>
+            <div id="timer" class="font-mono text-indigo-600 bg-white px-3 py-1 rounded-lg border shadow-sm">00:00</div>
+        </div>
+
+        <!-- Editor -->
+        <div class="p-6">
+            <textarea id="transcript-output" 
+                class="w-full h-[300px] p-6 text-slate-800 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none resize-none text-xl rounded-[2rem] shadow-inner font-medium"
+                placeholder="Dites 'Démarrer'..."></textarea>
+            
+            <div class="mt-6 space-y-4">
+                <div class="flex gap-4">
+                    <button id="start-btn" class="flex-1 py-5 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-3xl shadow-xl transition-all active:scale-95">DÉMARRER</button>
+                    <button id="stop-btn" class="hidden flex-1 py-5 bg-red-500 hover:bg-red-600 text-white font-black rounded-3xl shadow-xl recording-pulse active:scale-95 transition-all">STOP</button>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <button id="whatsapp-btn" class="py-4 bg-[#25D366] text-white font-bold rounded-2xl shadow-md hover:brightness-105 transition-all">WhatsApp</button>
+                    <button id="clear-btn" class="py-4 bg-slate-100 text-slate-500 font-bold rounded-2xl hover:bg-slate-200 transition-all">Effacer</button>
+                </div>
             </div>
         </div>
     </div>
-    <div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 px-8 py-4 bg-slate-900 text-white rounded-2xl text-sm font-semibold opacity-0 transition-opacity pointer-events-none shadow-2xl z-50">Message</div>
+    
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 bg-slate-900 text-white rounded-full text-xs font-bold opacity-0 transition-all pointer-events-none z-50"></div>
 
     <script>
         let currentLang = 'fr-FR';
         let isRecording = false;
         let isVoiceControlEnabled = false;
-        let recognition;
-        let timerInterval, silenceTimeout, startTime, accumulatedTime = 0;
-        let lastFinalPhrase = "";
+        let recognition = null;
+        let timerInterval, startTime;
 
-        const transcriptOutput = document.getElementById('transcript-output');
+        const output = document.getElementById('transcript-output');
         const startBtn = document.getElementById('start-btn');
         const stopBtn = document.getElementById('stop-btn');
         const voiceToggle = document.getElementById('voice-toggle');
-        const listeningIndicator = document.getElementById('listening-indicator');
-        const timerDisplay = document.getElementById('timer');
         const statusText = document.getElementById('status-text');
         const statusDot = document.getElementById('status-dot');
+        const timerDisplay = document.getElementById('timer');
         const toast = document.getElementById('toast');
-        const confirmModal = document.getElementById('confirm-modal');
 
-        // Commandes Vocales
-        const CMD_START_FR = ["lance le français", "démarre le français", "active le français"];
-        const CMD_START_AR = ["abda tasjal", "lance l'arabe", "active l'arabe", "ibda tasjil"];
-        const CMD_STOP = ["arrête l'enregistrement", "stop", "baraka tasjal", "waqaf", "baraka"];
+        // Mots-clés ultra-simplifiés
+        const CMD = {
+            START: ["démarrer", "abda", "ibda", "tasjal"],
+            STOP: ["stop", "arrête", "baraka", "waqaf"],
+            AR: ["arabe", "arabi"],
+            FR: ["français", "france", "fransi"]
+        };
+
+        function showToast(msg) {
+            toast.innerText = msg;
+            toast.classList.replace('opacity-0', 'opacity-100');
+            setTimeout(() => toast.classList.replace('opacity-100', 'opacity-0'), 2000);
+        }
 
         function initRecognition() {
-            if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) return null;
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            const rec = new SpeechRecognition();
+            const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!Speech) return null;
             
+            const rec = new Speech();
+            rec.lang = currentLang;
             rec.continuous = true;
             rec.interimResults = true;
-            rec.lang = currentLang;
-
-            rec.onstart = () => {
-                isRecording = true;
-                updateUI();
-                if (!timerInterval) startTimer();
-            };
 
             rec.onresult = (e) => {
-                let finalBatch = "";
-                
                 for (let i = e.resultIndex; i < e.results.length; ++i) {
-                    const transcript = e.results[i][0].transcript.toLowerCase().trim();
+                    const result = e.results[i][0].transcript.toLowerCase().trim();
                     
-                    // Si le contrôle vocal est activé, on cherche les commandes
                     if (isVoiceControlEnabled) {
-                        // Commande STOP
-                        if (isRecording && CMD_STOP.some(cmd => transcript.includes(cmd))) {
-                            handleStop();
-                            showToast("Commande : Arrêt");
-                            return;
-                        }
-
-                        // Commandes START
-                        if (!isRecording) {
-                            if (CMD_START_FR.some(cmd => transcript.includes(cmd))) {
-                                setLanguage('fr-FR');
-                                handleStart();
-                                showToast("Commande : Démarrage Français");
-                                return;
-                            }
-                            if (CMD_START_AR.some(cmd => transcript.includes(cmd))) {
-                                setLanguage('ar-SA');
-                                handleStart();
-                                showToast("Commande : Démarrage Arabe");
-                                return;
-                            }
-                        }
+                        if (CMD.STOP.some(k => result.includes(k))) { if(isRecording) handleStop(); return; }
+                        if (CMD.AR.some(k => result.includes(k))) { if(currentLang !== 'ar-SA') changeLanguage('ar-SA'); return; }
+                        if (CMD.FR.some(k => result.includes(k))) { if(currentLang !== 'fr-FR') changeLanguage('fr-FR'); return; }
+                        if (CMD.START.some(k => result.includes(k))) { if(!isRecording) handleStart(); return; }
                     }
 
-                    // Transcription classique
                     if (isRecording && e.results[i].isFinal) {
-                        if (transcript !== lastFinalPhrase) {
-                            finalBatch += e.results[i][0].transcript.trim() + " ";
-                            lastFinalPhrase = transcript;
+                        // On n'écrit pas les mots de commandes
+                        const isCmd = [...CMD.START, ...CMD.STOP, ...CMD.AR, ...CMD.FR].some(k => result.includes(k));
+                        if (!isCmd) {
+                            const val = e.results[i][0].transcript.trim();
+                            output.value += (output.value ? ' ' : '') + val + (currentLang === 'fr-FR' ? '.' : '');
+                            output.scrollTop = output.scrollHeight;
                         }
                     }
-                }
-
-                if (isRecording && finalBatch) {
-                    const space = transcriptOutput.value.length > 0 ? ' ' : '';
-                    const punct = currentLang.startsWith('fr') ? "." : " ";
-                    transcriptOutput.value += space + finalBatch.trim() + punct;
-                    transcriptOutput.scrollTop = transcriptOutput.scrollHeight;
                 }
             };
 
             rec.onend = () => {
-                // Relance uniquement si contrôle vocal actif OU si on était en train d'enregistrer
+                // Relance calme pour éviter de bloquer l'aperçu
                 if (isVoiceControlEnabled || isRecording) {
-                    try { rec.start(); } catch(e) {}
+                    setTimeout(() => {
+                        try { rec.start(); } catch(e) {}
+                    }, 800);
                 }
+            };
+
+            rec.onerror = (e) => {
+                if (e.error === 'network') showToast("Erreur Réseau");
+                console.error("Micro error:", e.error);
             };
 
             return rec;
         }
 
         function handleStart() {
-            lastFinalPhrase = "";
+            if (isRecording) return;
             isRecording = true;
             if (!recognition) recognition = initRecognition();
             try { recognition.start(); } catch(e) {}
+            startTimer();
             updateUI();
+            showToast("▶ Transcription...");
         }
 
         function handleStop() {
             isRecording = false;
-            if (!isVoiceControlEnabled) recognition.stop();
             stopTimer();
             updateUI();
+            if (!isVoiceControlEnabled && recognition) recognition.stop();
+            showToast("⏹ Arrêté");
+        }
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            const isAr = lang.startsWith('ar');
+            document.getElementById('btn-fr').className = lang === 'fr-FR' ? 'px-5 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white' : 'px-5 py-2 rounded-xl text-xs font-bold text-slate-400';
+            document.getElementById('btn-ar').className = isAr ? 'px-5 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white' : 'px-5 py-2 rounded-xl text-xs font-bold text-slate-400';
+            output.className = isAr ? "arabic-text w-full h-[300px] p-6 text-slate-800 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none resize-none text-xl rounded-[2rem] shadow-inner font-medium" : "w-full h-[300px] p-6 text-slate-800 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none resize-none text-xl rounded-[2rem] shadow-inner font-medium";
+            
+            showToast(isAr ? "Langue : Arabe" : "Langue : Français");
+            
+            if (recognition) {
+                recognition.lang = lang;
+                try { recognition.stop(); } catch(e) {}
+            }
         }
 
         voiceToggle.onchange = (e) => {
             isVoiceControlEnabled = e.target.checked;
-            listeningIndicator.classList.toggle('hidden', !isVoiceControlEnabled);
-            
+            document.getElementById('listening-indicator').classList.toggle('hidden', !isVoiceControlEnabled);
             if (isVoiceControlEnabled) {
                 if (!recognition) recognition = initRecognition();
                 try { recognition.start(); } catch(e) {}
-                showToast("Écouteur vocal activé");
-            } else {
-                if (!isRecording && recognition) recognition.stop();
-                showToast("Écouteur vocal désactivé");
+                showToast("Écouteur actif");
+            } else if (!isRecording && recognition) {
+                recognition.stop();
             }
             updateUI();
         };
 
-        function setLanguage(lang) {
-            currentLang = lang;
-            const isAr = lang.startsWith('ar');
-            document.getElementById('btn-fr').className = lang === 'fr-FR' ? 'px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-lg' : 'px-5 py-2.5 rounded-xl text-xs font-bold text-slate-400';
-            document.getElementById('btn-ar').className = isAr ? 'px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-lg' : 'px-5 py-2.5 rounded-xl text-xs font-bold text-slate-400';
-            transcriptOutput.className = isAr ? "arabic-text w-full h-[45vh] md:h-[400px] p-8 text-slate-800 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 outline-none resize-none text-xl rounded-[2rem] shadow-inner" : "w-full h-[45vh] md:h-[400px] p-8 text-slate-800 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 outline-none resize-none text-xl rounded-[2rem] shadow-inner";
-            if (recognition) recognition.lang = currentLang;
-        }
-
         function updateUI() {
             startBtn.classList.toggle('hidden', isRecording);
             stopBtn.classList.toggle('hidden', !isRecording);
-            
-            if (isRecording) {
-                statusDot.className = 'status-dot bg-red-500';
-                statusText.innerText = 'Enregistrement...';
-            } else if (isVoiceControlEnabled) {
-                statusDot.className = 'status-dot bg-green-500';
-                statusText.innerText = 'En attente d\'ordre...';
-            } else {
-                statusDot.className = 'status-dot bg-slate-300';
-                statusText.innerText = 'Prêt';
-            }
+            statusDot.className = isRecording ? 'h-2 w-2 rounded-full bg-red-500' : (isVoiceControlEnabled ? 'h-2 w-2 rounded-full bg-green-500' : 'h-2 w-2 rounded-full bg-slate-300');
+            statusText.innerText = isRecording ? 'Enregistrement' : (isVoiceControlEnabled ? 'Veille Vocale' : 'Système Prêt');
         }
 
         function startTimer() {
-            startTime = Date.now() - accumulatedTime;
+            let s = 0;
+            timerDisplay.innerText = "00:00";
             timerInterval = setInterval(() => {
-                accumulatedTime = Date.now() - startTime;
-                const elapsedSecs = Math.floor(accumulatedTime / 1000);
-                const mins = Math.floor(elapsedSecs / 60).toString().padStart(2, '0');
-                const secs = (elapsedSecs % 60).toString().padStart(2, '0');
-                timerDisplay.innerText = `${mins}:${secs}`;
+                s++;
+                const m = Math.floor(s/60).toString().padStart(2,'0');
+                const sec = (s%60).toString().padStart(2,'0');
+                timerDisplay.innerText = `${m}:${sec}`;
             }, 1000);
         }
 
-        function stopTimer() {
-            clearInterval(timerInterval);
-            timerInterval = null;
-        }
-
-        function showToast(m) { 
-            toast.innerText = m; 
-            toast.classList.remove('opacity-0'); 
-            setTimeout(() => toast.classList.add('opacity-0'), 3000); 
-        }
+        function stopTimer() { clearInterval(timerInterval); }
 
         startBtn.onclick = handleStart;
         stopBtn.onclick = handleStop;
-        
-        document.getElementById('whatsapp-btn').onclick = () => {
-            window.open("https://wa.me/?text=" + encodeURIComponent(transcriptOutput.value), '_blank');
-        };
-        document.getElementById('clear-btn').onclick = () => confirmModal.style.display = 'flex';
-        document.getElementById('modal-cancel').onclick = () => confirmModal.style.display = 'none';
-        document.getElementById('modal-confirm').onclick = () => {
-            transcriptOutput.value = ""; accumulatedTime = 0; timerDisplay.innerText = "00:00";
-            confirmModal.style.display = 'none'; showToast("Nettoyé");
-        };
-        
+        document.getElementById('clear-btn').onclick = () => { if(confirm("Effacer ?")) { output.value = ""; timerDisplay.innerText = "00:00"; } };
+        document.getElementById('whatsapp-btn').onclick = () => window.open("https://wa.me/?text=" + encodeURIComponent(output.value), '_blank');
+
         window.onload = () => { recognition = initRecognition(); };
     </script>
 </body>
 </html>
+
 
