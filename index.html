@@ -11,7 +11,9 @@
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f1f5f9;
-            overscroll-behavior-y: contain;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
         }
 
         .arabic-text {
@@ -35,22 +37,45 @@
             height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 8px;
         }
 
-        /* Ad Slot Styling */
+        /* Conteneur principal flexible */
+        .main-layout {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Sidebar Ads */
+        .side-ad {
+            display: none; /* Caché par défaut */
+            width: 160px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 20px;
+        }
+
+        @media (min-width: 1280px) {
+            .side-ad {
+                display: block; /* Affiché uniquement sur grand écran */
+            }
+        }
+
+        /* Style des emplacements publicitaires */
         .ad-placeholder {
-            background: #f8fafc;
-            border: 2px dashed #e2e8f0;
+            background-color: rgba(203, 213, 225, 0.2);
+            border: 2px dashed #cbd5e1;
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
+            text-align: center;
             color: #94a3b8;
             font-size: 10px;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            overflow: hidden;
-            text-align: center;
-            padding: 4px;
         }
 
         /* Modal Overlay */
@@ -64,134 +89,133 @@
             align-items: center;
             justify-content: center;
         }
-
-        /* Layout structure for Desktop/Web */
-        @media (min-width: 1280px) {
-            .main-container {
-                display: grid;
-                grid-template-columns: 200px 1fr 200px;
-                gap: 30px;
-                width: 100%;
-                max-width: 1440px;
-                padding: 0 20px;
-            }
-        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center p-4 md:p-8 pb-24">
+<body class="pb-24">
 
-    <div class="main-container w-full flex flex-col items-center">
+    <!-- Layout principal -->
+    <div class="main-layout">
         
-        <!-- SIDE AD LEFT (Desktop Only) -->
-        <div class="hidden xl:flex flex-col">
-            <div class="ad-placeholder w-[160px] h-[600px] sticky top-8">
-                Publicité Latérale (160x600)
+        <!-- PUB GAUCHE -->
+        <aside class="side-ad">
+            <div class="ad-placeholder h-[600px]">
+                Publicité Latérale<br>(160x600)
             </div>
-        </div>
+        </aside>
 
-        <!-- APP CARD -->
-        <div class="max-w-3xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
-            <!-- Header -->
-            <div class="bg-slate-900 p-6 text-white">
-                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2 bg-indigo-500 rounded-xl">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                            </svg>
+        <!-- APPLICATION CENTRALE -->
+        <main class="w-full max-w-3xl">
+            <div class="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 mt-4">
+                <!-- Header -->
+                <div class="bg-slate-900 p-6 text-white">
+                    <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2.5 bg-indigo-500 rounded-2xl">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h1 class="text-xl font-extrabold tracking-tight">TranscritVite</h1>
+                                <p class="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-medium">Production Ready</p>
+                            </div>
                         </div>
-                        <div>
-                            <h1 class="text-xl font-bold tracking-tight">TranscritVite</h1>
-                            <p class="text-[10px] text-slate-400 uppercase tracking-[0.2em]">Outil de Transcription</p>
+                        
+                        <div class="flex items-center gap-1.5 bg-slate-800 p-1 rounded-2xl border border-slate-700 shadow-inner">
+                            <button id="btn-fr" onclick="setLanguage('fr-FR')" class="px-5 py-2.5 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-lg">FR</button>
+                            <button id="btn-ar" onclick="setLanguage('ar-SA')" class="px-5 py-2.5 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white">AR</button>
                         </div>
                     </div>
+                </div>
+
+                <!-- Status Bar -->
+                <div class="bg-slate-50 px-8 py-4 border-b border-slate-100 flex justify-between items-center">
+                    <div class="flex items-center text-sm font-semibold text-slate-600">
+                        <span id="status-dot" class="status-dot bg-slate-300"></span>
+                        <span id="status-text">Prêt à l'usage</span>
+                    </div>
+                    <div id="timer" class="font-mono text-indigo-600 font-bold bg-indigo-50 px-3 py-1 rounded-lg">00:00</div>
+                </div>
+
+                <!-- Editor Area -->
+                <div class="p-6 md:p-8">
+                    <textarea id="transcript-output" 
+                        class="w-full h-[45vh] md:h-[400px] p-8 text-slate-800 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none resize-none text-xl rounded-[2rem] shadow-inner"
+                        placeholder="Appuyez sur le bouton bleu pour commencer..."></textarea>
                     
-                    <div class="flex items-center gap-2 bg-slate-800 p-1 rounded-xl border border-slate-700">
-                        <button id="btn-fr" onclick="setLanguage('fr-FR')" class="px-4 py-2 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white">FR</button>
-                        <button id="btn-ar" onclick="setLanguage('ar-SA')" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white">AR</button>
+                    <!-- Main Actions -->
+                    <div class="mt-8 flex flex-col gap-5">
+                        <div class="flex gap-4">
+                            <button id="start-btn" class="flex-1 flex items-center justify-center gap-3 px-8 py-5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-[1.5rem] transition-all shadow-xl shadow-indigo-200 active:scale-95 text-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Démarrer
+                            </button>
+                            <button id="stop-btn" class="hidden flex-1 flex items-center justify-center gap-3 px-8 py-5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-[1.5rem] transition-all shadow-xl shadow-red-200 recording-pulse text-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H10a1 1 0 01-1-1v-4z" />
+                                </svg>
+                                Arrêter
+                            </button>
+                        </div>
+
+                        <!-- Share & Export -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <button id="whatsapp-btn" class="flex items-center justify-center gap-2 py-4 bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold rounded-2xl transition-all shadow-lg active:scale-95">
+                                WhatsApp
+                            </button>
+                            <button id="share-btn" class="flex items-center justify-center gap-2 py-4 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-2xl transition-all shadow-lg active:scale-95">
+                                Partager
+                            </button>
+                        </div>
+
+                        <!-- Bottom Utils -->
+                        <div class="flex justify-between items-center mt-2">
+                            <button id="clear-btn" class="text-xs font-bold text-slate-400 hover:text-red-600 uppercase tracking-widest transition-colors p-3">Effacer</button>
+                            <button id="download-txt" class="text-xs font-bold text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-colors p-3">Exporter .TXT</button>
+                        </div>
                     </div>
                 </div>
             </div>
+        </main>
 
-            <!-- Status Bar -->
-            <div class="bg-slate-50 px-6 py-3 border-b border-slate-100 flex justify-between items-center">
-                <div class="flex items-center text-sm font-medium text-slate-600">
-                    <span id="status-dot" class="status-dot bg-slate-300"></span>
-                    <span id="status-text">Prêt</span>
-                </div>
-                <div id="timer" class="font-mono text-indigo-600 font-bold">00:00</div>
+        <!-- PUB DROITE -->
+        <aside class="side-ad">
+            <div class="ad-placeholder h-[600px]">
+                Publicité Latérale<br>(160x600)
             </div>
-
-            <!-- Editor Area -->
-            <div class="p-4 md:p-6">
-                <textarea id="transcript-output" 
-                    class="w-full h-[40vh] md:h-96 p-6 text-slate-800 bg-white border-2 border-slate-100 rounded-2xl focus:border-indigo-500 transition-all outline-none resize-none text-xl shadow-inner"
-                    placeholder="Cliquez sur démarrer..."></textarea>
-                
-                <!-- Main Actions -->
-                <div class="mt-6 flex flex-col gap-4">
-                    <div class="flex gap-4">
-                        <button id="start-btn" class="flex-1 flex items-center justify-center gap-2 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl transition-all shadow-lg active:scale-95">
-                            Démarrer le Micro
-                        </button>
-                        <button id="stop-btn" class="hidden flex-1 flex items-center justify-center gap-2 px-8 py-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-2xl transition-all shadow-lg recording-pulse">
-                            Arrêter l'enregistrement
-                        </button>
-                    </div>
-
-                    <!-- Share & Export -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <button id="whatsapp-btn" class="flex items-center justify-center gap-2 py-4 bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold rounded-2xl transition-all shadow-md active:scale-95">
-                            WhatsApp
-                        </button>
-                        <button id="share-btn" class="flex items-center justify-center gap-2 py-4 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-2xl transition-all shadow-md active:scale-95">
-                            Partager
-                        </button>
-                    </div>
-
-                    <!-- Bottom Utils -->
-                    <div class="flex justify-between items-center mt-2 px-2">
-                        <button id="clear-btn" class="text-xs font-bold text-slate-400 hover:text-red-600 uppercase tracking-widest transition-colors py-2 px-4">Effacer tout</button>
-                        <button id="download-txt" class="text-xs font-bold text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-colors py-2 px-4 text-right">Exporter TXT</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- SIDE AD RIGHT (Desktop Only) -->
-        <div class="hidden xl:flex flex-col">
-            <div class="ad-placeholder w-[160px] h-[600px] sticky top-8">
-                Publicité Latérale (160x600)
-            </div>
-        </div>
+        </aside>
 
     </div>
 
-    <!-- STICKY FOOTER AD (Web & Mobile) -->
-    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 flex items-center justify-center h-16 z-40 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
-        <div class="ad-placeholder w-full max-w-lg h-12 m-0 bg-slate-50 text-slate-400">
-            Bannière Publicitaire (320x50 / 468x60)
+    <!-- STICKY FOOTER AD -->
+    <div class="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-slate-200 flex items-center justify-center h-20 z-40 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
+        <div class="ad-placeholder w-full max-w-lg h-16">
+            Publicité Bas de Page (Bannière)
         </div>
     </div>
 
     <!-- Confirmation Modal -->
     <div id="confirm-modal" class="p-4">
-        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100">
-            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl text-center border border-slate-100">
+            <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
             </div>
-            <h3 class="text-xl font-bold text-slate-900 mb-2">Effacer le texte ?</h3>
-            <p class="text-slate-500 mb-6">Toutes les données seront supprimées définitivement.</p>
-            <div class="flex gap-3">
-                <button id="modal-cancel" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors">Annuler</button>
-                <button id="modal-confirm" class="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors">Confirmer</button>
+            <h3 class="text-2xl font-black text-slate-900 mb-2">Tout effacer ?</h3>
+            <p class="text-slate-500 mb-8 leading-relaxed">Le texte sera définitivement supprimé.</p>
+            <div class="flex flex-col gap-3">
+                <button id="modal-confirm" class="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl transition-colors shadow-lg shadow-red-100">Oui, effacer</button>
+                <button id="modal-cancel" class="w-full py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl transition-colors">Annuler</button>
             </div>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 px-6 py-3 bg-slate-900 text-white rounded-full text-sm opacity-0 transition-opacity pointer-events-none shadow-2xl z-50">
+    <div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 px-8 py-4 bg-slate-900 text-white rounded-2xl text-sm font-semibold opacity-0 transition-opacity pointer-events-none shadow-2xl z-50">
         Message
     </div>
 
@@ -219,14 +243,14 @@
         let startTime;
 
         function setLanguage(lang) {
-            if(isRecording) return showToast("Veuillez arrêter l'enregistrement d'abord.");
+            if(isRecording) return showToast("Arrêtez l'enregistrement d'abord.");
             currentLang = lang;
             const isAr = lang.startsWith('ar');
-            document.getElementById('btn-fr').className = lang === 'fr-FR' ? 'px-4 py-2 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white' : 'px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white';
-            document.getElementById('btn-ar').className = isAr ? 'px-4 py-2 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white' : 'px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white';
+            document.getElementById('btn-fr').className = lang === 'fr-FR' ? 'px-5 py-2.5 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-lg' : 'px-5 py-2.5 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white';
+            document.getElementById('btn-ar').className = isAr ? 'px-5 py-2.5 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-lg' : 'px-5 py-2.5 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white';
             
-            transcriptOutput.className = isAr ? "w-full h-[40vh] md:h-96 p-6 text-slate-800 bg-white border-2 border-slate-100 rounded-2xl focus:border-indigo-500 transition-all outline-none resize-none text-xl shadow-inner arabic-text" : "w-full h-[40vh] md:h-96 p-6 text-slate-800 bg-white border-2 border-slate-100 rounded-2xl focus:border-indigo-500 transition-all outline-none resize-none text-xl shadow-inner";
-            transcriptOutput.placeholder = isAr ? "تحدث الآن ليتم تحويل صوتك إلى نص..." : "Parlez maintenant pour transcrire votre voix...";
+            transcriptOutput.className = isAr ? "w-full h-[45vh] md:h-[400px] p-8 text-slate-800 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none resize-none text-xl rounded-[2rem] shadow-inner arabic-text" : "w-full h-[45vh] md:h-[400px] p-8 text-slate-800 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none resize-none text-xl rounded-[2rem] shadow-inner";
+            transcriptOutput.placeholder = isAr ? "تحدث الآن ليتم تحويل صوتك إلى نص مکتوب..." : "Parlez maintenant pour transcrire votre voix...";
         }
 
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -254,7 +278,7 @@
             startBtn.classList.toggle('hidden', isRecording);
             stopBtn.classList.toggle('hidden', !isRecording);
             statusDot.className = `status-dot ${isRecording ? 'bg-red-500' : 'bg-slate-300'}`;
-            statusText.innerText = isRecording ? 'Enregistrement...' : 'Prêt';
+            statusText.innerText = isRecording ? 'Enregistrement en cours' : 'Prêt à l\'usage';
         }
 
         function startTimer() {
@@ -288,7 +312,7 @@
 
         stopBtn.onclick = stopRecording;
         clearBtn.onclick = () => {
-            if (transcriptOutput.value.trim() === "") return showToast("Le texte est déjà vide");
+            if (transcriptOutput.value.trim() === "") return showToast("Déjà vide");
             confirmModal.style.display = 'flex';
         };
         modalCancel.onclick = () => confirmModal.style.display = 'none';
@@ -296,16 +320,16 @@
             transcriptOutput.value = "";
             timerDisplay.innerText = "00:00";
             confirmModal.style.display = 'none';
-            showToast("Texte effacé");
+            showToast("Zone de texte réinitialisée");
         };
 
         whatsappBtn.onclick = () => {
-            if (!transcriptOutput.value) return showToast("Aucun texte à partager.");
+            if (!transcriptOutput.value) return showToast("Aucun texte.");
             window.open("https://wa.me/?text=" + encodeURIComponent(transcriptOutput.value), '_blank');
         };
 
         shareBtn.onclick = async () => {
-            if (!transcriptOutput.value) return showToast("Aucun texte à partager.");
+            if (!transcriptOutput.value) return showToast("Aucun texte.");
             if (navigator.share) {
                 try {
                     await navigator.share({ title: 'Transcription', text: transcriptOutput.value });
@@ -313,7 +337,7 @@
             } else {
                 transcriptOutput.select();
                 document.execCommand('copy');
-                showToast("Texte copié dans le presse-papier !");
+                showToast("Copié !");
             }
         };
 
