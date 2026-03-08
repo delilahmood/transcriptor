@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -36,7 +36,7 @@
                 <div>
                     <h1 class="text-xl font-black uppercase tracking-tight">TranscritVite</h1>
                     <div class="flex items-center gap-2 mt-1">
-                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Écouteur</span>
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Écouteur Vocal</span>
                         <label class="switch">
                             <input type="checkbox" id="voice-toggle">
                             <span class="slider"></span>
@@ -64,7 +64,7 @@
         <div class="p-6">
             <textarea id="transcript-output" 
                 class="w-full h-[300px] p-6 text-slate-800 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none resize-none text-xl rounded-[2rem] shadow-inner font-medium"
-                placeholder="Dites 'Démarrer'..."></textarea>
+                placeholder="Cliquez sur 'Démarrer' pour commencer..."></textarea>
             
             <div class="mt-6 space-y-4">
                 <div class="flex gap-4">
@@ -79,14 +79,16 @@
         </div>
     </div>
     
-    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 bg-slate-900 text-white rounded-full text-xs font-bold opacity-0 transition-all pointer-events-none z-50"></div>
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 bg-slate-900 text-white rounded-full text-xs font-bold opacity-0 transition-all pointer-events-none z-50 shadow-lg"></div>
 
     <script>
         let currentLang = 'fr-FR';
-        let isRecording = false;
-        let isVoiceControlEnabled = false;
+        let isRecording = false; 
+        let isVoiceControlEnabled = false; 
         let recognition = null;
-        let timerInterval, startTime;
+        let timerInterval;
+        let lastRestartTime = 0;
+        let stopRequested = false;
 
         const output = document.getElementById('transcript-output');
         const startBtn = document.getElementById('start-btn');
@@ -97,12 +99,11 @@
         const timerDisplay = document.getElementById('timer');
         const toast = document.getElementById('toast');
 
-        // Mots-clés ultra-simplifiés
         const CMD = {
-            START: ["démarrer", "abda", "ibda", "tasjal"],
-            STOP: ["stop", "arrête", "baraka", "waqaf"],
-            AR: ["arabe", "arabi"],
-            FR: ["français", "france", "fransi"]
+            START: ["démarrer", "abda", "ibda", "tasjal", "commence"],
+            STOP: ["stop", "arrête", "baraka", "waqaf", "finir"],
+            AR: ["arabe", "arabi", "arabiya"],
+            FR: ["français", "france", "fransi", "fransiya"]
         };
 
         function showToast(msg) {
@@ -113,48 +114,68 @@
 
         function initRecognition() {
             const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!Speech) return null;
+            if (!Speech) {
+                showToast("Navigateur incompatible");
+                return null;
+            }
             
+            if (recognition) {
+                try { recognition.abort(); } catch(e) {}
+            }
+
             const rec = new Speech();
             rec.lang = currentLang;
             rec.continuous = true;
             rec.interimResults = true;
 
+            rec.onstart = () => {
+                console.log("Micro démarré");
+                statusDot.classList.add('bg-green-500');
+            };
+
             rec.onresult = (e) => {
+                let interimTranscript = '';
                 for (let i = e.resultIndex; i < e.results.length; ++i) {
                     const result = e.results[i][0].transcript.toLowerCase().trim();
                     
+                    // Priorité aux commandes vocales si activées
                     if (isVoiceControlEnabled) {
-                        if (CMD.STOP.some(k => result.includes(k))) { if(isRecording) handleStop(); return; }
-                        if (CMD.AR.some(k => result.includes(k))) { if(currentLang !== 'ar-SA') changeLanguage('ar-SA'); return; }
-                        if (CMD.FR.some(k => result.includes(k))) { if(currentLang !== 'fr-FR') changeLanguage('fr-FR'); return; }
-                        if (CMD.START.some(k => result.includes(k))) { if(!isRecording) handleStart(); return; }
+                        if (CMD.STOP.some(k => result.includes(k))) { handleStop(); return; }
+                        if (CMD.AR.some(k => result.includes(k))) { changeLanguage('ar-SA'); return; }
+                        if (CMD.FR.some(k => result.includes(k))) { changeLanguage('fr-FR'); return; }
+                        if (CMD.START.some(k => result.includes(k))) { handleStart(); return; }
                     }
 
-                    if (isRecording && e.results[i].isFinal) {
-                        // On n'écrit pas les mots de commandes
-                        const isCmd = [...CMD.START, ...CMD.STOP, ...CMD.AR, ...CMD.FR].some(k => result.includes(k));
-                        if (!isCmd) {
+                    if (isRecording) {
+                        if (e.results[i].isFinal) {
                             const val = e.results[i][0].transcript.trim();
-                            output.value += (output.value ? ' ' : '') + val + (currentLang === 'fr-FR' ? '.' : '');
-                            output.scrollTop = output.scrollHeight;
+                            // On vérifie que ce n'est pas une commande
+                            const isCmd = [...CMD.START, ...CMD.STOP, ...CMD.AR, ...CMD.FR].some(k => result.includes(k));
+                            if (!isCmd) {
+                                output.value += (output.value ? ' ' : '') + val + (currentLang === 'fr-FR' ? '.' : '');
+                                output.scrollTop = output.scrollHeight;
+                            }
                         }
                     }
                 }
             };
 
             rec.onend = () => {
-                // Relance calme pour éviter de bloquer l'aperçu
-                if (isVoiceControlEnabled || isRecording) {
-                    setTimeout(() => {
-                        try { rec.start(); } catch(e) {}
-                    }, 800);
+                console.log("Session terminée");
+                if (!stopRequested && (isVoiceControlEnabled || isRecording)) {
+                    const now = Date.now();
+                    if (now - lastRestartTime > 1500) {
+                        lastRestartTime = now;
+                        setTimeout(() => {
+                            try { rec.start(); } catch(err) {}
+                        }, 300);
+                    }
                 }
             };
 
             rec.onerror = (e) => {
-                if (e.error === 'network') showToast("Erreur Réseau");
-                console.error("Micro error:", e.error);
+                console.error("Erreur Speech:", e.error);
+                if (e.error === 'not-allowed') showToast("Micro bloqué");
             };
 
             return rec;
@@ -162,46 +183,64 @@
 
         function handleStart() {
             if (isRecording) return;
+            stopRequested = false;
             isRecording = true;
+            
             if (!recognition) recognition = initRecognition();
-            try { recognition.start(); } catch(e) {}
-            startTimer();
-            updateUI();
-            showToast("▶ Transcription...");
+            
+            try { 
+                recognition.start();
+                startTimer();
+                updateUI();
+                showToast("Écoute...");
+            } catch(e) {
+                // Déjà démarré ou erreur
+                updateUI();
+            }
         }
 
         function handleStop() {
             isRecording = false;
+            stopRequested = true;
             stopTimer();
             updateUI();
-            if (!isVoiceControlEnabled && recognition) recognition.stop();
-            showToast("⏹ Arrêté");
+            
+            if (!isVoiceControlEnabled && recognition) {
+                try { recognition.stop(); } catch(e) {}
+            }
+            showToast("Arrêté");
         }
 
         function changeLanguage(lang) {
             currentLang = lang;
             const isAr = lang.startsWith('ar');
-            document.getElementById('btn-fr').className = lang === 'fr-FR' ? 'px-5 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white' : 'px-5 py-2 rounded-xl text-xs font-bold text-slate-400';
-            document.getElementById('btn-ar').className = isAr ? 'px-5 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white' : 'px-5 py-2 rounded-xl text-xs font-bold text-slate-400';
+            document.getElementById('btn-fr').className = lang === 'fr-FR' ? 'px-5 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-lg' : 'px-5 py-2 rounded-xl text-xs font-bold text-slate-400';
+            document.getElementById('btn-ar').className = isAr ? 'px-5 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-lg' : 'px-5 py-2 rounded-xl text-xs font-bold text-slate-400';
             output.className = isAr ? "arabic-text w-full h-[300px] p-6 text-slate-800 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none resize-none text-xl rounded-[2rem] shadow-inner font-medium" : "w-full h-[300px] p-6 text-slate-800 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none resize-none text-xl rounded-[2rem] shadow-inner font-medium";
-            
-            showToast(isAr ? "Langue : Arabe" : "Langue : Français");
             
             if (recognition) {
                 recognition.lang = lang;
+                stopRequested = false;
                 try { recognition.stop(); } catch(e) {}
             }
+            showToast(isAr ? "Arabe" : "Français");
         }
 
         voiceToggle.onchange = (e) => {
             isVoiceControlEnabled = e.target.checked;
             document.getElementById('listening-indicator').classList.toggle('hidden', !isVoiceControlEnabled);
+            
             if (isVoiceControlEnabled) {
+                stopRequested = false;
                 if (!recognition) recognition = initRecognition();
-                try { recognition.start(); } catch(e) {}
-                showToast("Écouteur actif");
-            } else if (!isRecording && recognition) {
-                recognition.stop();
+                try { recognition.start(); } catch(err) {}
+                showToast("Contrôle vocal ON");
+            } else {
+                if (!isRecording) {
+                    stopRequested = true;
+                    try { recognition.stop(); } catch(e) {}
+                }
+                showToast("Contrôle vocal OFF");
             }
             updateUI();
         };
@@ -210,12 +249,12 @@
             startBtn.classList.toggle('hidden', isRecording);
             stopBtn.classList.toggle('hidden', !isRecording);
             statusDot.className = isRecording ? 'h-2 w-2 rounded-full bg-red-500' : (isVoiceControlEnabled ? 'h-2 w-2 rounded-full bg-green-500' : 'h-2 w-2 rounded-full bg-slate-300');
-            statusText.innerText = isRecording ? 'Enregistrement' : (isVoiceControlEnabled ? 'Veille Vocale' : 'Système Prêt');
+            statusText.innerText = isRecording ? 'Enregistrement' : (isVoiceControlEnabled ? 'Veille Vocale' : 'Prêt');
         }
 
         function startTimer() {
             let s = 0;
-            timerDisplay.innerText = "00:00";
+            if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 s++;
                 const m = Math.floor(s/60).toString().padStart(2,'0');
@@ -224,13 +263,17 @@
             }, 1000);
         }
 
-        function stopTimer() { clearInterval(timerInterval); }
+        function stopTimer() { clearInterval(timerInterval); timerInterval = null; }
 
         startBtn.onclick = handleStart;
         stopBtn.onclick = handleStop;
         document.getElementById('clear-btn').onclick = () => { if(confirm("Effacer ?")) { output.value = ""; timerDisplay.innerText = "00:00"; } };
-        document.getElementById('whatsapp-btn').onclick = () => window.open("https://wa.me/?text=" + encodeURIComponent(output.value), '_blank');
+        document.getElementById('whatsapp-btn').onclick = () => {
+            if(!output.value) return showToast("Texte vide");
+            window.open("https://wa.me/?text=" + encodeURIComponent(output.value), '_blank');
+        };
 
+        // Initialisation propre
         window.onload = () => { recognition = initRecognition(); };
     </script>
 </body>
