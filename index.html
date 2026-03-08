@@ -1,9 +1,9 @@
-
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TranscritVite - Version Ultra Stable</title>
+    <title>TranscritVite - Version Pro Anti-Répétition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Noto+Sans+Arabic:wght@400;700&display=swap');
@@ -54,8 +54,8 @@
         <div class="bg-slate-50 px-8 py-3 border-b flex justify-between items-center text-[10px] font-black uppercase text-slate-500 tracking-tighter">
             <div class="flex items-center gap-2">
                 <span id="status-dot" class="h-2 w-2 rounded-full bg-slate-300"></span>
-                <span id="status-text">Système Prêt</span>
-                <span id="listening-indicator" class="hidden px-2 py-0.5 bg-indigo-100 text-indigo-600 rounded">Micro Ouvert</span>
+                <span id="status-text">Prêt</span>
+                <span id="listening-indicator" class="hidden px-2 py-0.5 bg-indigo-100 text-indigo-600 rounded">Veille active</span>
             </div>
             <div id="timer" class="font-mono text-indigo-600 bg-white px-3 py-1 rounded-lg border shadow-sm">00:00</div>
         </div>
@@ -64,7 +64,7 @@
         <div class="p-6">
             <textarea id="transcript-output" 
                 class="w-full h-[300px] p-6 text-slate-800 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none resize-none text-xl rounded-[2rem] shadow-inner font-medium"
-                placeholder="Cliquez sur 'Démarrer' pour commencer..."></textarea>
+                placeholder="Cliquez sur 'Démarrer' et parlez..."></textarea>
             
             <div class="mt-6 space-y-4">
                 <div class="flex gap-4">
@@ -72,7 +72,15 @@
                     <button id="stop-btn" class="hidden flex-1 py-5 bg-red-500 hover:bg-red-600 text-white font-black rounded-3xl shadow-xl recording-pulse active:scale-95 transition-all">STOP</button>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                    <button id="whatsapp-btn" class="py-4 bg-[#25D366] text-white font-bold rounded-2xl shadow-md hover:brightness-105 transition-all">WhatsApp</button>
+                    <button id="whatsapp-btn" class="py-4 bg-[#25D366] text-white font-bold rounded-2xl shadow-md hover:brightness-105 transition-all flex items-center justify-center gap-2">
+                        WhatsApp
+                    </button>
+                    <button id="email-btn" class="py-4 bg-blue-500 text-white font-bold rounded-2xl shadow-md hover:brightness-105 transition-all flex items-center justify-center gap-2">
+                        E-mail
+                    </button>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <button id="share-btn" class="py-4 bg-slate-800 text-white font-bold rounded-2xl shadow-md hover:bg-slate-700 transition-all">Partager</button>
                     <button id="clear-btn" class="py-4 bg-slate-100 text-slate-500 font-bold rounded-2xl hover:bg-slate-200 transition-all">Effacer</button>
                 </div>
             </div>
@@ -87,7 +95,7 @@
         let isVoiceControlEnabled = false; 
         let recognition = null;
         let timerInterval;
-        let lastRestartTime = 0;
+        let lastResultIndex = 0; // Pour éviter de traiter les mêmes résultats plusieurs fois
         let stopRequested = false;
 
         const output = document.getElementById('transcript-output');
@@ -129,30 +137,36 @@
             rec.interimResults = true;
 
             rec.onstart = () => {
-                console.log("Micro démarré");
+                lastResultIndex = 0; 
                 statusDot.classList.add('bg-green-500');
             };
 
             rec.onresult = (e) => {
-                let interimTranscript = '';
                 for (let i = e.resultIndex; i < e.results.length; ++i) {
-                    const result = e.results[i][0].transcript.toLowerCase().trim();
+                    const resultText = e.results[i][0].transcript.toLowerCase().trim();
                     
-                    // Priorité aux commandes vocales si activées
+                    // Détection des commandes vocales
                     if (isVoiceControlEnabled) {
-                        if (CMD.STOP.some(k => result.includes(k))) { handleStop(); return; }
-                        if (CMD.AR.some(k => result.includes(k))) { changeLanguage('ar-SA'); return; }
-                        if (CMD.FR.some(k => result.includes(k))) { changeLanguage('fr-FR'); return; }
-                        if (CMD.START.some(k => result.includes(k))) { handleStart(); return; }
+                        if (CMD.STOP.some(k => resultText.includes(k))) { if(isRecording) handleStop(); return; }
+                        if (CMD.AR.some(k => resultText.includes(k))) { if(currentLang !== 'ar-SA') changeLanguage('ar-SA'); return; }
+                        if (CMD.FR.some(k => resultText.includes(k))) { if(currentLang !== 'fr-FR') changeLanguage('fr-FR'); return; }
+                        if (CMD.START.some(k => resultText.includes(k))) { if(!isRecording) handleStart(); return; }
                     }
 
-                    if (isRecording) {
-                        if (e.results[i].isFinal) {
-                            const val = e.results[i][0].transcript.trim();
-                            // On vérifie que ce n'est pas une commande
-                            const isCmd = [...CMD.START, ...CMD.STOP, ...CMD.AR, ...CMD.FR].some(k => result.includes(k));
-                            if (!isCmd) {
-                                output.value += (output.value ? ' ' : '') + val + (currentLang === 'fr-FR' ? '.' : '');
+                    // Transcription du texte final
+                    if (isRecording && e.results[i].isFinal) {
+                        const finalVal = e.results[i][0].transcript.trim();
+                        
+                        // Sécurité anti-répétition : On vérifie si ce segment n'a pas déjà été ajouté
+                        // ou s'il n'est pas une commande.
+                        const isCmd = [...CMD.START, ...CMD.STOP, ...CMD.AR, ...CMD.FR].some(k => resultText.includes(k));
+                        
+                        if (!isCmd) {
+                            // Vérification si le texte existe déjà à la fin pour éviter les doublons mobiles
+                            const currentContent = output.value.trim();
+                            if (!currentContent.endsWith(finalVal)) {
+                                const space = output.value.length > 0 ? ' ' : '';
+                                output.value += space + finalVal + (currentLang === 'fr-FR' ? '.' : '');
                                 output.scrollTop = output.scrollHeight;
                             }
                         }
@@ -161,21 +175,18 @@
             };
 
             rec.onend = () => {
-                console.log("Session terminée");
+                // Relance automatique seulement si nécessaire avec un délai plus long
+                // pour éviter le bruit d'activation/désactivation constant
                 if (!stopRequested && (isVoiceControlEnabled || isRecording)) {
-                    const now = Date.now();
-                    if (now - lastRestartTime > 1500) {
-                        lastRestartTime = now;
-                        setTimeout(() => {
-                            try { rec.start(); } catch(err) {}
-                        }, 300);
-                    }
+                    setTimeout(() => {
+                        try { if(!stopRequested) rec.start(); } catch(err) {}
+                    }, 1000); // 1 seconde de repos pour le CPU et l'audio
                 }
             };
 
             rec.onerror = (e) => {
-                console.error("Erreur Speech:", e.error);
-                if (e.error === 'not-allowed') showToast("Micro bloqué");
+                if (e.error === 'aborted') return;
+                console.error("Erreur:", e.error);
             };
 
             return rec;
@@ -185,16 +196,13 @@
             if (isRecording) return;
             stopRequested = false;
             isRecording = true;
-            
             if (!recognition) recognition = initRecognition();
-            
             try { 
-                recognition.start();
+                recognition.start(); 
                 startTimer();
                 updateUI();
-                showToast("Écoute...");
+                showToast("Transcription...");
             } catch(e) {
-                // Déjà démarré ou erreur
                 updateUI();
             }
         }
@@ -204,7 +212,6 @@
             stopRequested = true;
             stopTimer();
             updateUI();
-            
             if (!isVoiceControlEnabled && recognition) {
                 try { recognition.stop(); } catch(e) {}
             }
@@ -214,8 +221,8 @@
         function changeLanguage(lang) {
             currentLang = lang;
             const isAr = lang.startsWith('ar');
-            document.getElementById('btn-fr').className = lang === 'fr-FR' ? 'px-5 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-lg' : 'px-5 py-2 rounded-xl text-xs font-bold text-slate-400';
-            document.getElementById('btn-ar').className = isAr ? 'px-5 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-lg' : 'px-5 py-2 rounded-xl text-xs font-bold text-slate-400';
+            document.getElementById('btn-fr').className = lang === 'fr-FR' ? 'px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-lg' : 'px-5 py-2 rounded-xl text-xs font-bold text-slate-400';
+            document.getElementById('btn-ar').className = isAr ? 'px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-lg' : 'px-5 py-2 rounded-xl text-xs font-bold text-slate-400';
             output.className = isAr ? "arabic-text w-full h-[300px] p-6 text-slate-800 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none resize-none text-xl rounded-[2rem] shadow-inner font-medium" : "w-full h-[300px] p-6 text-slate-800 bg-slate-50 border-2 border-transparent focus:bg-white focus:border-indigo-500 transition-all outline-none resize-none text-xl rounded-[2rem] shadow-inner font-medium";
             
             if (recognition) {
@@ -229,18 +236,14 @@
         voiceToggle.onchange = (e) => {
             isVoiceControlEnabled = e.target.checked;
             document.getElementById('listening-indicator').classList.toggle('hidden', !isVoiceControlEnabled);
-            
             if (isVoiceControlEnabled) {
                 stopRequested = false;
                 if (!recognition) recognition = initRecognition();
                 try { recognition.start(); } catch(err) {}
-                showToast("Contrôle vocal ON");
-            } else {
-                if (!isRecording) {
-                    stopRequested = true;
-                    try { recognition.stop(); } catch(e) {}
-                }
-                showToast("Contrôle vocal OFF");
+                showToast("Écoute active");
+            } else if (!isRecording && recognition) {
+                stopRequested = true;
+                try { recognition.stop(); } catch(e) {}
             }
             updateUI();
         };
@@ -249,7 +252,7 @@
             startBtn.classList.toggle('hidden', isRecording);
             stopBtn.classList.toggle('hidden', !isRecording);
             statusDot.className = isRecording ? 'h-2 w-2 rounded-full bg-red-500' : (isVoiceControlEnabled ? 'h-2 w-2 rounded-full bg-green-500' : 'h-2 w-2 rounded-full bg-slate-300');
-            statusText.innerText = isRecording ? 'Enregistrement' : (isVoiceControlEnabled ? 'Veille Vocale' : 'Prêt');
+            statusText.innerText = isRecording ? 'Enregistrement' : (isVoiceControlEnabled ? 'Veille Vocale' : 'Système Prêt');
         }
 
         function startTimer() {
@@ -267,16 +270,43 @@
 
         startBtn.onclick = handleStart;
         stopBtn.onclick = handleStop;
-        document.getElementById('clear-btn').onclick = () => { if(confirm("Effacer ?")) { output.value = ""; timerDisplay.innerText = "00:00"; } };
+
+        document.getElementById('clear-btn').onclick = () => {
+            if(confirm("Effacer tout le texte ?")) {
+                output.value = "";
+                timerDisplay.innerText = "00:00";
+                lastResultIndex = 0;
+            }
+        };
+
         document.getElementById('whatsapp-btn').onclick = () => {
             if(!output.value) return showToast("Texte vide");
             window.open("https://wa.me/?text=" + encodeURIComponent(output.value), '_blank');
         };
 
-        // Initialisation propre
-        window.onload = () => { recognition = initRecognition(); };
+        document.getElementById('email-btn').onclick = () => {
+            if(!output.value) return showToast("Texte vide");
+            const subject = encodeURIComponent("Transcription TranscritVite");
+            const body = encodeURIComponent(output.value);
+            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        };
+
+        document.getElementById('share-btn').onclick = async () => {
+            if (!output.value) return showToast("Texte vide");
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: 'Transcription', text: output.value });
+                } catch (err) {}
+            } else {
+                output.select();
+                document.execCommand('copy');
+                showToast("Copié");
+            }
+        };
+
     </script>
 </body>
 </html>
+
 
 
